@@ -51,12 +51,6 @@ npm run dev
 `npm run dev` starts the app at `http://localhost:3000`. `postinstall` also
 runs `prisma generate` automatically after `npm install`.
 
-## Screenshots
-
-![Dashboard](docs/screenshots/dashboard.png)
-
-![FEFO-based stock issuance](docs/screenshots/fefo-issuance.png)
-
 ## Architecture
 
 - **App Router structure**: pages live under `src/app/<feature>` (e.g.
