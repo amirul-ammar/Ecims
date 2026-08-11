@@ -1,36 +1,76 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ECIMS — Electronic Component Inventory Management System
 
-## Getting Started
+A web app for tracking electronic components across warehouse locations, with
+lot-level expiry tracking, FEFO-based stock allocation, and a role-gated
+approval workflow for stock requests.
 
-First, run the development server:
+## Tech stack
+
+- Next.js 16 (App Router) with React 19 and TypeScript
+- MySQL via Prisma ORM
+- NextAuth for authentication (credentials provider)
+- Zustand for client state
+- Recharts for charts, jsPDF and SheetJS (xlsx) for report export
+- Zod for request validation
+
+## Key features
+
+- FEFO (first-expired, first-out) lot allocation when issuing stock
+- Role-based access for four roles: Admin, Inventory Controller, Warehouse, Engineering
+- Request/approval workflow for Engineering to request parts and Warehouse to fulfill them
+- Real-time dashboard updates via Server-Sent Events
+- ABC analysis and other inventory analytics
+- PDF and Excel export for stock, valuation, movement, and audit reports
+
+## Getting started
+
+### Prerequisites
+
+- Node.js 20+
+- A MySQL database
+
+### Environment variables
+
+Create a `.env.local` file with:
+
+- `DATABASE_URL` — MySQL connection string
+- `NEXTAUTH_SECRET` — secret used to sign NextAuth session tokens
+- `NEXTAUTH_URL` — base URL of the app (e.g. `http://localhost:3000`)
+- `APP_TIMEZONE` — IANA timezone used for date calculations (e.g. `Asia/Kuala_Lumpur`)
+
+### Install and run
 
 ```bash
+npm install
+npx prisma migrate dev
+npx prisma generate
+npm run db:seed
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+`npm run dev` starts the app at `http://localhost:3000`. `postinstall` also
+runs `prisma generate` automatically after `npm install`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Screenshots
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+![Dashboard](docs/screenshots/dashboard.png)
 
-## Learn More
+![FEFO-based stock issuance](docs/screenshots/fefo-issuance.png)
 
-To learn more about Next.js, take a look at the following resources:
+## Architecture
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **App Router structure**: pages live under `src/app/<feature>` (e.g.
+  `dashboard`, `parts`, `transactions`, `requests`, `reports`); each has a
+  matching route under `src/app/api/<feature>` for its data.
+- **API routes**: all server logic (Prisma queries, validation, FEFO
+  allocation, report generation) lives in `src/app/api/**/route.ts`, with
+  shared logic in `src/lib` (`data-ingestion.ts`, `reports.ts`, `rbac.ts`).
+- **RBAC enforcement**: `src/middleware.ts` blocks unauthenticated requests
+  and enforces coarse route-level role checks (e.g. only the Inventory
+  Controller can write to `/api/parts` or `/api/locations`). Each API route
+  then calls `requireRole()` from `src/lib/rbac.ts` for the specific
+  permission that action requires, using the role matrix defined there.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## About
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Final-year university project.
